@@ -4,7 +4,8 @@ import { generateSong } from './midiGenerator'
 
 function App() {
   const [form, setForm] = useState({
-    genre: '',
+    genre: 'blues',
+    key: 'C',
     timeSignature: '4/4',
     tempo: 120,
     style: '',
@@ -29,7 +30,25 @@ function App() {
       <form onSubmit={handleSubmit}>
         <label>
           Genre
-          <input name="genre" value={form.genre} onChange={handleChange} />
+          <select name="genre" value={form.genre} onChange={handleChange}>
+            <option value="blues">Blues</option>
+            <option value="rock">Rock</option>
+            <option value="jazz">Jazz</option>
+            <option value="folk">Folk</option>
+            <option value="classical">Classical</option>
+          </select>
+        </label>
+        <label>
+          Key
+          <select name="key" value={form.key} onChange={handleChange}>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="G">G</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+          </select>
         </label>
         <label>
           Time Signature
