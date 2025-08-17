@@ -65,11 +65,16 @@ export function generateSong({ genre, key, timeSignature, tempo, style }) {
   const progression = genreProgressions[genre] || [0, 5, 7]
   const intervals = chordIntervals[genre] || [0, 4, 7]
 
-  sections.forEach(() => {
+  const chordProgressions = {}
+
+  sections.forEach((section) => {
+    chordProgressions[section] = []
     for (let m = 0; m < measuresPerSection; m++) {
       const measureStart = currentBeat + m * beatsPerMeasure
       const rootSemitone =
         progression[Math.floor(Math.random() * progression.length)]
+      const chordName = noteInKey(rootSemitone, 3).replace(/\d/g, '')
+      chordProgressions[section].push(chordName)
       const chordNotes = intervals.map((i) => noteInKey(rootSemitone + i, 4))
       const chordNotesGtr = intervals.map((i) => noteInKey(rootSemitone + i, 3))
 
@@ -142,5 +147,5 @@ export function generateSong({ genre, key, timeSignature, tempo, style }) {
   const blob = new Blob([midi.toArray()], { type: 'audio/midi' })
   const url = URL.createObjectURL(blob)
 
-  return { url, start }
+  return { url, start, chordProgressions }
 }

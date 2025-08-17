@@ -12,6 +12,7 @@ function App() {
   })
   const [midiUrl, setMidiUrl] = useState(null)
   const [startPlayback, setStartPlayback] = useState(null)
+  const [chordProgressions, setChordProgressions] = useState(null)
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -19,9 +20,10 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const { url, start } = generateSong(form)
+    const { url, start, chordProgressions: chords } = generateSong(form)
     setMidiUrl(url)
     setStartPlayback(() => start)
+    setChordProgressions(chords)
   }
 
   return (
@@ -81,6 +83,16 @@ function App() {
               Download MIDI
             </a>
           )}
+        </div>
+      )}
+      {chordProgressions && (
+        <div className="chords">
+          <h2>Chord Progressions</h2>
+          {Object.entries(chordProgressions).map(([section, chords]) => (
+            <p key={section}>
+              <strong>{section}:</strong> {chords.join(' - ')}
+            </p>
+          ))}
         </div>
       )}
     </div>
