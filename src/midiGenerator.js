@@ -37,14 +37,6 @@ export function generateSong({ genre, key, timeSignature, tempo, style }) {
   const keyOffsets = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
   const keyOffset = keyOffsets[key] || 0
 
-  const genreProgressions = {
-    blues: [0, 0, 5, 0, 7, 5, 0],
-    rock: [0, 5, 7, 0, 5, 7, 9],
-    jazz: [0, 2, 7, 0],
-    folk: [0, 5, 7, 9],
-    classical: [0, 7, 9, 5],
-  }
-
   const chordIntervals = {
     blues: [0, 3, 5],
     rock: [0, 4, 7],
@@ -58,21 +50,39 @@ export function generateSong({ genre, key, timeSignature, tempo, style }) {
     return Tone.Frequency(base).transpose(keyOffset + semitone).toNote()
   }
 
+  const weightedChords = [
+    { semitone: 0, weight: 7 }, // I
+    { semitone: 7, weight: 6 }, // V
+    { semitone: 5, weight: 5 }, // IV
+    { semitone: 9, weight: 4 }, // VI
+    { semitone: 2, weight: 3 }, // II
+    { semitone: 4, weight: 2 }, // III
+    { semitone: 11, weight: 1 }, // VII
+  ]
+
+  const pickChordRoot = () => {
+    const total = weightedChords.reduce((sum, c) => sum + c.weight, 0)
+    let r = Math.random() * total
+    for (const c of weightedChords) {
+      if (r < c.weight) return c.semitone
+      r -= c.weight
+    }
+    return weightedChords[0].semitone
+  }
+
   const sections = ['intro', 'verse', 'chorus', 'bridge', 'outro']
-  const measuresPerSection = 2
   let currentBeat = 0
 
-  const progression = genreProgressions[genre] || [0, 5, 7]
   const intervals = chordIntervals[genre] || [0, 4, 7]
 
   const chordProgressions = {}
 
   sections.forEach((section) => {
+    const chordsInSection = Math.floor(Math.random() * 5) + 2
     chordProgressions[section] = []
-    for (let m = 0; m < measuresPerSection; m++) {
+    for (let m = 0; m < chordsInSection; m++) {
       const measureStart = currentBeat + m * beatsPerMeasure
-      const rootSemitone =
-        progression[Math.floor(Math.random() * progression.length)]
+      const rootSemitone = pickChordRoot()
       const chordName = noteInKey(rootSemitone, 3).replace(/\d/g, '')
       chordProgressions[section].push(chordName)
       const chordNotes = intervals.map((i) => noteInKey(rootSemitone + i, 4))
@@ -112,7 +122,7 @@ export function generateSong({ genre, key, timeSignature, tempo, style }) {
         events.guitar.push({ time: measureStart + b, note: n, duration: 1 })
       }
     }
-    currentBeat += measuresPerSection * beatsPerMeasure
+    currentBeat += chordsInSection * beatsPerMeasure
   })
 
   Object.keys(events).forEach((name) => {
