@@ -1,7 +1,7 @@
 import * as Tone from 'tone'
 import { Midi } from '@tonejs/midi'
 
-export function generateSong({ genre, timeSignature, tempo, style }) {
+export function generateSong({ genre, key, timeSignature, tempo, style }) {
   Tone.Transport.stop()
   Tone.Transport.cancel()
 
@@ -34,33 +34,66 @@ export function generateSong({ genre, timeSignature, tempo, style }) {
     guitar: [],
   }
 
+  const keyOffsets = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+  const keyOffset = keyOffsets[key] || 0
+
+  const genreProgressions = {
+    blues: [0, 0, 5, 0, 7, 5, 0],
+    rock: [0, 5, 7, 0, 5, 7, 9],
+    jazz: [0, 2, 7, 0],
+    folk: [0, 5, 7, 9],
+    classical: [0, 7, 9, 5],
+  }
+
+  const chordIntervals = {
+    blues: [0, 3, 5],
+    rock: [0, 4, 7],
+    jazz: [0, 4, 7, 11],
+    folk: [0, 4, 7],
+    classical: [0, 4, 7],
+  }
+
+  const noteInKey = (semitone, octave) => {
+    const base = `C${octave}`
+    return Tone.Frequency(base).transpose(keyOffset + semitone).toNote()
+  }
+
   const sections = ['intro', 'verse', 'chorus', 'bridge', 'outro']
   const measuresPerSection = 2
   let currentBeat = 0
 
+  const progression = genreProgressions[genre] || [0, 5, 7]
+  const intervals = chordIntervals[genre] || [0, 4, 7]
+
   sections.forEach(() => {
     for (let m = 0; m < measuresPerSection; m++) {
       const measureStart = currentBeat + m * beatsPerMeasure
+      const rootSemitone =
+        progression[Math.floor(Math.random() * progression.length)]
+      const chordNotes = intervals.map((i) => noteInKey(rootSemitone + i, 4))
+      const chordNotesGtr = intervals.map((i) => noteInKey(rootSemitone + i, 3))
 
       for (let b = 0; b < beatsPerMeasure; b++) {
         const time = measureStart + b
         events.drums.push({ time, note: 'G3', duration: 1 })
-
-        if (b === 0 || b === Math.floor(beatsPerMeasure / 2)) {
+        if (b === 0 || Math.random() < 0.2) {
           events.drums.push({ time, note: 'C3', duration: 1 })
         }
         if (b === Math.floor(beatsPerMeasure / 2)) {
           events.drums.push({ time, note: 'D3', duration: 1 })
         }
+        if (Math.random() < 0.3) {
+          events.drums.push({ time: time + 0.5, note: 'G3', duration: 0.5 })
+        }
       }
 
       events.bass.push({
         time: measureStart,
-        note: 'C2',
+        note: noteInKey(rootSemitone, 2),
         duration: beatsPerMeasure,
       })
 
-      ;['C4', 'E4', 'G4'].forEach((n) => {
+      chordNotes.forEach((n) => {
         events.keys.push({
           time: measureStart,
           note: n,
@@ -68,14 +101,10 @@ export function generateSong({ genre, timeSignature, tempo, style }) {
         })
       })
 
-      for (let b = 0; b < beatsPerMeasure; b += 2) {
-        ;['C3', 'E3', 'G3'].forEach((n) => {
-          events.guitar.push({
-            time: measureStart + b,
-            note: n,
-            duration: 1,
-          })
-        })
+      for (let b = 0; b < beatsPerMeasure; b++) {
+        const n =
+          chordNotesGtr[Math.floor(Math.random() * chordNotesGtr.length)]
+        events.guitar.push({ time: measureStart + b, note: n, duration: 1 })
       }
     }
     currentBeat += measuresPerSection * beatsPerMeasure
